@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const axios = require('axios');
-const async = require('async');
+// const async = require('async');
 const _ = require('lodash');
 const PORT = process.env.PORT || 8000;
 const {apiKey} = require('./config.json');
@@ -31,22 +31,24 @@ async function calling(player_data) {
 }
 
 app.post('/result', async (req, res) => {
-    const check_summoner_history = 'https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/';
-    const check_match_by_name = 'https://na1.api.riotgames.com/lol/match/v4/matchlists/by-account/';
+    const summoner_history_url = 'https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-name/';
+    const match_by_name_url = 'https://na1.api.riotgames.com/lol/match/v4/matchlists/by-account/';
     // const check_match_by_id = 'https://na1.api.riotgames.com/lol/match/v4/matches/';
     let queue_type = '?queue=420';
+    let rank_season = '&season=13';
     let player1_name = req.body.player1_name;
     let player2_name = req.body.player2_name;
-    try{
-        let player1_result = await axios.get(check_summoner_history + player1_name);
-        let player2_result = await axios.get(check_summoner_history + player2_name);
-        let [p1_accId, p2_accId] = await Promise.all([player1_result, player2_result]);
-        res.json(p1_accId.data);
-    }catch(error){
-        // res.send(error)
-        next(error)
-    }
 
+    // getting summoner ID
+    let player1_getId = await axios.get(summoner_history_url + player1_name);
+    let player2_getId = await axios.get(summoner_history_url + player2_name);
+    let [player1_info, player2_info] = await Promise.all([player1_getId, player1_getId]);
+    // console.log(player1_getId)
+    // get match history
+    let player1_match_history = await axios.get(match_by_name_url + player1_info.data.accountId + queue_type + rank_season + '&beginIndex=300');
+    // let player2_match_history = await axios.get(match_by_name_url + player2_info.data.accountId);
+    // console.log(player1_match_history)
+    res.json(player1_match_history.data)
     // async.waterfall([
     //     function(callback) {
     //         axios.get(check_summoner_history + player1_name).then((response) => {
