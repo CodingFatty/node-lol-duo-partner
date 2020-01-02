@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const mongoose = require('./db/connect');
 const axios = require('axios');
 const _ = require('lodash');
 const PORT = process.env.PORT || 8000;
@@ -40,12 +41,12 @@ app.post('/result', async (req, res) => {
     let [player1_info, player2_info] = await Promise.all([player1_getId, player2_getId])
 
     // get match history
-    let player1_match_api = await match_list(player1_info.accountId);
-    let player2_match_api = await match_list(player2_info.accountId);
+    let player1_match_api = await match_list(player1_info.accountId,[],0);
+    let player2_match_api = await match_list(player2_info.accountId,[],0);
     let [player1_history, player2_history] = await Promise.all([player1_match_api, player2_match_api]);
     // console.log(player1_history, player2_history);
 
-    res.send('success')
+    res.json(_.size(player1_history) + 'and' + _.size(player2_history))
 
     // res.json(player1_match_history)
 })
