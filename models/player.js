@@ -1,9 +1,21 @@
 const mongoose = require('mongoose');
 
 let SummonerSchema = new mongoose.Schema({
-    history: {
-        type:
+    summonerId: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    matches: [{
+        gameId: String,
+        match: Object
+    }],
+    lastUpdated: {
+        type: Number,
+        required: true
     }
+}, {
+    collection: 'historySeed'
 })
 
 let Summoner = mongoose.model('Summoner', SummonerSchema);
