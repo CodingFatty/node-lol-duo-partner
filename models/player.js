@@ -8,7 +8,8 @@ let SummonerSchema = new mongoose.Schema({
     },
     matches: [{
         gameId: String,
-        match: Object
+        match: Object,
+        KDA: Number
     }],
     lastUpdated: {
         type: Number,
