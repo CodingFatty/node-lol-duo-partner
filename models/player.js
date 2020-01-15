@@ -14,7 +14,8 @@ let SummonerSchema = new mongoose.Schema({
     lastUpdated: {
         type: Number,
         required: true
-    }
+    },
+    lastIndex: Number
 }, {
     collection: 'historySeed'
 })
