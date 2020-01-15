@@ -6,29 +6,31 @@ const queue_type = '?queue=420';
 const rank_season = '&season=13';
 const match_current_index = 0;
 const begin_index = `&beginIndex=${match_current_index}`;
+const { Summoner } = require('./models/player');
 
-axios.defaults.headers.common['X-Riot-Token'] = apiKey;
+// axios.defaults.headers.common['X-Riot-Token'] = apiKey;
 
-// let match_obj = {};
-
-async function match_list(accountId, total_game, index) {
+async function match_list(accountId) {
     try {
-        // console.log(match_by_name_url + accountId + queue_type + rank_season + index)
-        let result = await axios.get(match_by_name_url + accountId, {
-            params: {
-                queue: 420,
-                season: 13,
-                beginIndex: index
+        let index = 0;
+        let gameList = [];
+        let summoner = await Summoner.findOne({ summonerId: accountId });
+        summoner ? index = summoner.lastIndex : undefined;
+        while (true) {
+            let result = await axios.get(match_by_name_url + accountId, {
+                params: {
+                    queue: 420,
+                    season: 13,
+                    beginIndex: index
+                }
+            });
+            if (!_.isEmpty(result.data.matches)) {
+                gameList = _.concat(gameList, result.data.matches)
+                index = result.data.endIndex + 1;
+            } else {
+                return gameList;
             }
-        });
-        if (!_.isEmpty(result.data.matches)) {
-            let total_game_new = _.concat(total_game, result.data.matches)
-            return await match_list(accountId, total_game_new, result.data.endIndex + 1);
-        } else {
-            // console.log(total_game)
-            return total_game;
         }
-        
     } catch (e) {
         console.log(e)
     }
