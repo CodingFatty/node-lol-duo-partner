@@ -14,7 +14,7 @@ function summoner_stat(summonerId) {
                     let championId = summoner.matches[i].match.championId
                     let victory = summoner.matches[i].match.stats.win
                     let csScore = summoner.matches[i].match.stats.totalMinionsKilled
-                    result.push({
+                    summoner.matches[i].detail = {
                         role,
                         lane,
                         championId,
@@ -23,7 +23,8 @@ function summoner_stat(summonerId) {
                         kills: summoner.matches[i].match.stats.kills,
                         assists: summoner.matches[i].match.stats.assists,
                         deaths: summoner.matches[i].match.stats.deaths
-                    })
+                    }
+                    result.push(summoner.matches[i].detail)
                 }
             }
 
