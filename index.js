@@ -1,56 +1,50 @@
 const express = require('express');
 const app = express();
-const mongoose = require('./db/connect');
 const axios = require('axios');
 const _ = require('lodash');
 const PORT = process.env.PORT || 8000;
-const {apiKey} = require('./config.json');
-const {summoner_id} = require('./summoner_id');
-const {match_list} = require('./match_list');
+const { apiKey } = require('./config.json');
+const { summoner_id } = require('./summoner_id');
+const { match_list } = require('./match_list');
+const { match_detail } = require('./match_detail');
+const { summoner_stat } = require('./summoner_stat');
 
 app.use(express.json());
 
 axios.defaults.headers.common['X-Riot-Token'] = apiKey;
 axios.defaults.headers.common['Accept-Charset'] = "application/x-www-form-urlencoded";
 
-// function timeout(ms) {
-//     return new Promise(resolve => setTimeout(resolve, ms));
-// };
-
-// async function calling(player_data) {
-//     const check_match_by_id = 'https://na1.api.riotgames.com/lol/match/v4/matches/';
-//     let final_obj = [];
-
-//     for (let player in player_data) {
-//         let player_match = player_data[player].matches;
-//         for (let match in player_match) {
-//             let a = await axios.get(check_match_by_id + player_match[match].gameId)
-//             final_obj = _.concat(final_obj, a.data);
-//         }
-//     }
-//     return final_obj;
-// }
-
 app.post('/result', async (req, res) => {
-    let {player1_name, player2_name} = req.body;
-    
-    // getting summoner ID
+    let { player1_name, player2_name } = req.body;
 
-    const player1_getId =  await summoner_id(player1_name)
-    const player2_getId =  await summoner_id(player2_name)
-    let [player1_info, player2_info] = await Promise.all([player1_getId, player2_getId])
+    // // getting summoner ID
+    const player1_info = await summoner_id(player1_name)
+    const player2_info = await summoner_id(player2_name)
+    await Promise.all([player1_info, player2_info])
 
-    // get match history
-    let player1_match_api = await match_list(player1_info.accountId,[],0);
-    let player2_match_api = await match_list(player2_info.accountId,[],0);
-    let [player1_history, player2_history] = await Promise.all([player1_match_api, player2_match_api]);
-    // console.log(player1_history, player2_history);
+    // // get match history
+    let player1_history = await match_list(player1_info.accountId);
+    let player2_history = await match_list(player2_info.accountId);
+    await Promise.all([player1_history, player2_history]);
 
-    res.json(_.size(player1_history) + 'and' + _.size(player2_history))
+    // fetch match detail
+    let player1_matchId = player1_history.map(history => history.gameId)
+    let player2_matchId = player2_history.map(history => history.gameId)
+    await Promise.all([
+        match_detail(player1_matchId, player1_info.name, player1_info.accountId, 20),
+        match_detail(player2_matchId, player2_info.name, player2_info.accountId, 20)])
 
-    // res.json(player1_match_history)
+
+    // extract summoner stat
+    let p1_result = await summoner_stat(player1_info.accountId)
+    let p2_result = await summoner_stat(player2_info.accountId)
+
+    res.status(200).json({
+        'Player1' : p1_result,
+        'Player2' : p2_result
+    })
 })
 
-app.listen(PORT, () => {    
+app.listen(PORT, () => {
     console.log(`Server is running on port:${PORT}`)
 });

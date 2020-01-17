@@ -1,14 +1,7 @@
 const axios = require('axios');
-const { apiKey } = require('./config.json');
 const _ = require('lodash')
 const match_by_name_url = 'https://na1.api.riotgames.com/lol/match/v4/matchlists/by-account/';
-const queue_type = '?queue=420';
-const rank_season = '&season=13';
-const match_current_index = 0;
-const begin_index = `&beginIndex=${match_current_index}`;
 const { Summoner } = require('./models/player');
-
-// axios.defaults.headers.common['X-Riot-Token'] = apiKey;
 
 async function match_list(accountId) {
     try {
