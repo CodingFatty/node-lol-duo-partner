@@ -1,9 +1,16 @@
 const mongoose = require('mongoose');
-const { db } = require('../config.json');
 
-const dbUsername = process.env.DB_USERNAME || db.username;
-const dbPassword = process.env.DB_PASSWORD || db.password;
+let dbUsername = process.env.DB_USERNAME;
+let dbPassword = process.env.DB_PASSWORD;
 
+let env = process.env.NODE_ENV || 'development';
+
+if (env == 'development' || env === 'test') {
+    const { db } = require('../config.json');
+    dbUsername = db.username
+    dbPassword = db.password
+
+}
 const mongoDB = `mongodb://${dbUsername}:${dbPassword}@ds263068.mlab.com:63068/duo-analysis`;
 
 mongoose.set('useCreateIndex', true)
