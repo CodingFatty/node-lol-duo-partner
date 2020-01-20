@@ -6,7 +6,7 @@ const _ = require('lodash');
 const mongoose = require('./db/connect');
 const PORT = process.env.PORT || 8000;
 // const { apiKey } = require('./config.json');
-const {apiKey} = process.env.RGKEY || require('./config.json')
+const apiKey = process.env.RGKEY;
 const { summoner_id } = require('./summoner_id');
 const { match_list } = require('./match_list');
 const { match_detail } = require('./match_detail');
@@ -15,6 +15,10 @@ const { summoner_stat } = require('./summoner_stat');
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+if (!apiKey) {
+    apiKey = require('./config.json');
+}
 
 axios.defaults.headers.common['X-Riot-Token'] = apiKey;
 axios.defaults.headers.common['Accept-Charset'] = "application/x-www-form-urlencoded";
