@@ -17,75 +17,86 @@ async function match_api(player_name, matchId) {
     return detail
 }
 
-function fetch_detail(summoner, matchId, player_name, index) {
+function fetch_detail(gameList, player_name, index) {
     return new Promise(async (resolve, reject) => {
-        if (!_.find(summoner.matches, ['gameId', _.toString(matchId[index])])) {
-            let detail = await match_api(player_name, matchId[index])
-            summoner.matches.push({
-                gameId: matchId[index],
-                match: detail
-            })
-            summoner.lastUpdated = Math.floor(Date.now() / 1000);
-            console.log(`${matchId[index]} saved`)
-            resolve(summoner);
-        } else {
-            console.log(`${matchId[index]} already exists`)
-            reject();
-        }
+        // if (_.isEmpty(summoner.matches[index].match)) {
+        // console.log(index)
+        
+        let detail = await match_api(player_name, gameList[index].gameId).catch(err => reject(err));
+        gameList[index].match = detail;
+
+        console.log(`${gameList[index].gameId} saved`)
+        // resolve(summoner);
+        resolve();
+        // } else {
+        //     // console.log(`${summoner.matches[index].gameId} already exists`)
+        //     reject(new Error('Match Not Empty'));
+        // }
     })
 }
 
-function limitCall(summoner, matchId, player_name, rateLimit, index ,concurrentCallLimit, timeInterval) {
+// async function timeout(timeInterval) {
+//     return new Promise(resolve => setTimeout(resolve, timeInterval));
+// }
+function limitCall(gameList, player_name, rateLimit, concurrentCallLimit, timeInterval) {
     return new Promise(async (resolve, reject) => {
+        let index = 0;
         let promises = [];
         let currentLimit = 1;
         while (currentLimit <= rateLimit) {
-            let promise = fetch_detail(summoner, matchId, player_name, index);
-            promises.push(promise)
+            let promise = fetch_detail(gameList, player_name, index).catch(err => err)
+            promises.push(promise);
+            console.log(currentLimit, promise)
             if (currentLimit % concurrentCallLimit === 0 || currentLimit === rateLimit) {
+                console.log('-----------')
+                // promise all? race ? reject?
                 await Promise.all(promises)
                     .then(() => {
-                        if (currentLimit === rateLimit){
+                        if (currentLimit === rateLimit) {
                             return;
                         }
-                        console.log(`${timeInterval}ms`)
+                        console.log(`${currentLimit}, ${concurrentCallLimit}, ${timeInterval}ms`)
+
+                        // .catch(() => currentLimit--)
+                        // _.forEach(values, value => {
+                        //     console.log(value.message)
+                        //     value.message === 'Match Not Empty' ? currentLimit-- : undefined;
+                        // })
                         return new Promise(resolve => setTimeout(resolve, timeInterval));
-                    })
-                    .catch(() => currentLimit--)
+                    }).catch(err => reject(err))
                 promises = [];
             }
             currentLimit++;
             index++;
         }
-        summoner.lastIndex = index;
-        resolve(summoner);
+        // summoner.lastIndex = index;
+        // resolve(summoner);
+        resolve();
     })
 }
 
-async function match_detail(matchId, player_name, accountId, rateLimit) {
-    let summoner = await Summoner.findOne({
-        summonerId: accountId
-    })
-    // if summoner doesnt exist in db
-    if (!summoner) {
-        let detail = await match_api(player_name, matchId[0])
-        summoner = await Summoner.create({
-            summonerId: accountId,
-            matches: {
-                gameId: matchId[0],
-                match: detail
-            },
-            lastUpdated: Math.floor(Date.now() / 1000),
-            lastIndex: 1
+async function match_detail(player_name, accountId, rateLimit) {
+    try {
+        let summoner = await Summoner.findOne({
+            summonerId: accountId
         })
-        console.log(`${matchId[0]} created`);
-        rateLimit -= 1;
-    }
 
-    // if summoner exist in db & match detail is not yet saved
-    summoner = await limitCall(summoner, matchId, player_name, rateLimit, summoner.lastIndex, 5, 1000)
-    await summoner.save()
-    console.log(`all saved`);
+        // get a list of matches with no match detail
+        let filteredList = _.filter(summoner.matches, obj => _.isEmpty(obj.match));
+
+        if (!_.isEmpty(filteredList)) {
+            await limitCall(filteredList, player_name, rateLimit, 4, 1000);
+        }
+
+        summoner.lastUpdated = Math.floor(Date.now() / 1000);
+        await summoner.save()
+        console.log(`all saved`);
+    } catch (e) {
+        throw {
+            code: err.response.data.status.status_code,
+            message: err.response.data.status.message
+        }
+    }
 }
 
 module.exports = { match_detail }

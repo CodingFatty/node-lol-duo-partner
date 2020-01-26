@@ -7,15 +7,23 @@ let SummonerSchema = new mongoose.Schema({
         unique: true
     },
     matches: [{
-        gameId: String,
+        platformId: String,
+        gameId: Number,
+        champion: Number,
+        queue: Number,
+        season: Number,
+        timestamp: Number,
+        role: String,
+        lane: String,
         match: Object,
         detail: Object
     }],
+    championWinRate: Object,
+    overallWinRate: Object,
     lastUpdated: {
-        type: Number,
-        required: true
+        type: Number
     },
-    lastIndex: Number
+    lastFetchTimestamp: Number
 }, {
     collection: 'historySeed'
 })

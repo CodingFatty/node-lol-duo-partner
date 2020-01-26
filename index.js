@@ -1,4 +1,4 @@
-require('./config');
+require('./config.js');
 const express = require('express');
 const app = express();
 const axios = require('axios');
@@ -24,34 +24,43 @@ app.post('/result', async (req, res) => {
         let { player1_name, player2_name } = req.body;
 
         // getting summoner ID
-        const player1_info = await summoner_id(player1_name)
-        const player2_info = await summoner_id(player2_name)
-        await Promise.all([player1_info, player2_info])
+        let [player1_info, player2_info] = await Promise.all([summoner_id(player1_name), summoner_id(player2_name)])
 
-        // // get match history
-        // let player1_history = await match_list(player1_info.accountId);
-        // let player2_history = await match_list(player2_info.accountId);
-        // await Promise.all([player1_history, player2_history])
+        // get match history
+        // let [player1_history, player2_history] = 
+        await Promise.all([match_list(player1_info.accountId), match_list(player2_info.accountId)])
 
-        // // fetch match detail
+        // fetch match detail
+        // let match_detail_promise = [];
+        // if (!_.isEmpty(player1_history)) {
         // let player1_matchId = player1_history.map(history => history.gameId)
-        // let player2_matchId = player2_history.map(history => history.gameId)
-        // await Promise.all([
-        //     match_detail(player1_matchId, player1_info.name, player1_info.accountId, 20),
-        //     match_detail(player2_matchId, player2_info.name, player2_info.accountId, 20)])
 
+        // match_detail_promise.push(match_detail(player1_info.name, player1_info.accountId, 20))
+
+        // }
+        // if (!_.isEmpty(player2_history)) {
+        // let player2_matchId = player2_history.map(history => history.gameId)
+        // match_detail_promise.push(match_detail(player2_info.name, player2_info.accountId, 20))
+        // }
+
+        await Promise.all([
+            match_detail(player1_info.name, player1_info.accountId, 20),
+            match_detail(player2_info.name, player2_info.accountId, 20)
+        ])
 
         // // extract summoner stat
-        // let p1_result = await summoner_stat(player1_info.accountId)
-        // let p2_result = await summoner_stat(player2_info.accountId)
+        let p1_result = await summoner_stat(player1_info.accountId)
+        let p2_result = await summoner_stat(player2_info.accountId)
 
-        // res.status(200).json({
-        //     'Player1': p1_result,
-        //     'Player2': p2_result
-        // })
-        res.status(200).send('ok')
+        res.status(200).json({
+            'Player1': p1_result,
+            'Player2': p2_result
+        })
+        // console.log(player1_info)
+        // res.status(200).json(p1_result)
     } catch (e) {
-        res.status(400).send(e)
+        console.log(e)
+        res.status(e.code).json({ message: e.message })
     }
 })
 
