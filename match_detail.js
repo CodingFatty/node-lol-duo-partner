@@ -19,58 +19,50 @@ async function match_api(player_name, matchId) {
 
 function fetch_detail(gameList, player_name, index) {
     return new Promise(async (resolve, reject) => {
-        // if (_.isEmpty(summoner.matches[index].match)) {
-        // console.log(index)
-        
         let detail = await match_api(player_name, gameList[index].gameId).catch(err => reject(err));
-        gameList[index].match = detail;
 
+        gameList[index].match = detail;
         console.log(`${gameList[index].gameId} saved`)
-        // resolve(summoner);
         resolve();
-        // } else {
-        //     // console.log(`${summoner.matches[index].gameId} already exists`)
-        //     reject(new Error('Match Not Empty'));
-        // }
     })
 }
 
-// async function timeout(timeInterval) {
-//     return new Promise(resolve => setTimeout(resolve, timeInterval));
-// }
 function limitCall(gameList, player_name, rateLimit, concurrentCallLimit, timeInterval) {
     return new Promise(async (resolve, reject) => {
         let index = 0;
         let promises = [];
         let currentLimit = 1;
         while (currentLimit <= rateLimit) {
-            let promise = fetch_detail(gameList, player_name, index).catch(err => err)
-            promises.push(promise);
-            console.log(currentLimit, promise)
-            if (currentLimit % concurrentCallLimit === 0 || currentLimit === rateLimit) {
-                console.log('-----------')
-                // promise all? race ? reject?
-                await Promise.all(promises)
-                    .then(() => {
-                        if (currentLimit === rateLimit) {
-                            return;
-                        }
-                        console.log(`${currentLimit}, ${concurrentCallLimit}, ${timeInterval}ms`)
+            if (_.size(gameList) > index) {
+                let promise = fetch_detail(gameList, player_name, index)
+                promises.push(promise);
+                console.log(currentLimit, promise)
+                if (currentLimit % concurrentCallLimit === 0 || currentLimit === rateLimit || _.size(gameList) === index + 1) {
+                    console.log('-----------')
+                    // promise all? race ? reject?
+                    await Promise.all(promises)
+                        .then(() => {
+                            if (currentLimit === rateLimit) {
+                                return;
+                            }
+                            console.log(`${currentLimit}, ${concurrentCallLimit}, ${timeInterval}ms`)
 
-                        // .catch(() => currentLimit--)
-                        // _.forEach(values, value => {
-                        //     console.log(value.message)
-                        //     value.message === 'Match Not Empty' ? currentLimit-- : undefined;
-                        // })
-                        return new Promise(resolve => setTimeout(resolve, timeInterval));
-                    }).catch(err => reject(err))
-                promises = [];
+                            // .catch(() => currentLimit--)
+                            // _.forEach(values, value => {
+                            //     console.log(value.message)
+                            //     value.message === 'Match Not Empty' ? currentLimit-- : undefined;
+                            // })
+                            return new Promise(resolve => setTimeout(resolve, timeInterval));
+                        })
+
+                    promises = [];
+                }
+                currentLimit++;
+                index++;
+            } else {
+                break;
             }
-            currentLimit++;
-            index++;
         }
-        // summoner.lastIndex = index;
-        // resolve(summoner);
         resolve();
     })
 }
