@@ -10,7 +10,7 @@
   "author": "Dennis",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.19.0",
+    "axios": "^0.21.1",
     "cors": "^2.8.5",
     "express": "^4.16.4",
     "lodash": "^4.17.15",
